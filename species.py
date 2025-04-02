@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # +
 from stations import *
 
@@ -12,6 +13,21 @@ class Species:
     def __init__(self, id_pasa=None, plt_id_cfvvf=None, latin_name=None, data=None,
                  columns=None, distributions=None, proximities=None, concentrations=None,
                  optimums=None):
+        """
+        Species object.
+
+        Attributes:
+        id_pasa (int): ID with abundance (pasa = "plante à seuil d'abondance" in French)
+        plt_id_cfvvf (int): ID (cfvvf = "code forestier..." in French)
+        latin_name (str): Name of the species in the dataframe
+        data (pd.Dataframe): Contains all the samples with the species (36 climatic variables, geographical info)
+        columns (list): Names of the 36 climatic variables
+        distributions (dict): Keys are columns' names and values are tuples containing counts and bin edges values
+        proximities (dict): Keys are columns' names and values are lists with proximites for every bin edge (cf. above)
+        concentrations (dict): Keys are columns' names and values are lists with concentrations for every bin edge (cf. above)
+        optimums (dict): Level of the layer for each node
+        """
+        
         if id_pasa is None and latin_name is None:
             id_pasa = 1
         elif id_pasa is None:

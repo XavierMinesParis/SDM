@@ -3,6 +3,9 @@ import numpy as np
 import pandas as pd
 
 class Statistics:
+    """
+    Provides auxiliary statistical methods 
+    """
     
     def get_proximities(distrib1, distrib2):
         p, bin_edges = distrib1

@@ -6,6 +6,10 @@ from stations import *
 from species import *
 
 class Visualization:
+    """
+    Displays information about species and its relationships with climatic variables: the distributions,
+    the concentrations, the climatic optimums, etc.
+    """
     
     def plot_concentration(species, column):
         plt.plot(Stations.ubiquist_proximities[column], label="Poximity of the ubiquist species")
@@ -56,6 +60,7 @@ class Visualization:
             tmax_optimums = [s.optimums[column][1] for column in tmax_columns]
             plt.xticks(np.arange(12), labels)
             ax1.bar(np.arange(12), tmax_values, alpha=0.4, label=s.latin_name)
+            ax1.set_title("Max Temperature")
             
             tmin_powers = np.array([s.optimums[column][0] for column in tmin_columns])
             tmin_values = []
@@ -65,6 +70,7 @@ class Visualization:
             tmin_optimums = [s.optimums[column][1] for column in tmin_columns]
             plt.xticks(np.arange(12), labels)
             ax2.bar(np.arange(12), tmin_values, alpha=0.4)
+            ax2.set_title("Min Temperature")
             
             rain_powers = np.array([s.optimums[column][0] for column in rain_columns])
             rain_values = []
@@ -74,6 +80,7 @@ class Visualization:
             rain_optimums = [s.optimums[column][1] for column in rain_columns]
             plt.xticks(np.arange(12), labels)
             ax3.bar(np.arange(12), rain_values, alpha=0.4)
+            ax3.set_title("Rainfall")
         
         fig.tight_layout()
         lines_labels = [ax.get_legend_handles_labels() for ax in fig.axes]
