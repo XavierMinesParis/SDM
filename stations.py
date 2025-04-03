@@ -28,4 +28,4 @@ class Stations:
         counts, bin_edges = np.histogram(variable.values, bins=np.unique(variable), density=True)
         counts /= np.sum(counts)
         distributions[column] = (counts, bin_edges)
-        ubiquist_proximities[column] = Statistics.get_proximities(distributions[column], distributions[column])
+        ubiquist_proximities[column] = Statistics.get_proximities(bin_edges, counts, counts)

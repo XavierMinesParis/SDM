@@ -1,18 +1,22 @@
 # +
 import numpy as np
 import pandas as pd
+#import matplotlib.pyplot as plt
 
 class Statistics:
     """
     Provides auxiliary statistical methods 
     """
     
-    def get_proximities(distrib1, distrib2):
-        p, bin_edges = distrib1
-        q, bin_edges = distrib2
+    def get_proximities(bin_edges, p, q):
 
         F = np.cumsum(q)
         u = p * (F - q /2 - 1 / 2)
+        #plt.plot(u, label='u')
+        #plt.plot(p, label='p')
+        #plt.plot(q, label='q')
+        #plt.legend()
+        #plt.show()
         n = len(p)
         g = np.zeros(n)
  
@@ -23,4 +27,5 @@ class Statistics:
         
         for k in range(n-1):
             g[k+1] = g[k] + u[k] + u[k+1]
-        return g
+            
+        return 1 - g
