@@ -22,6 +22,7 @@ class Stations:
     data = climat_fr[dict_variables.keys()]
     distributions = dict()
     ubiquist_proximities = dict()
+    medians = dict()
     
     for column in data.columns:
         variable = data[column]
@@ -29,3 +30,4 @@ class Stations:
         counts /= np.sum(counts)
         distributions[column] = (counts, bin_edges)
         ubiquist_proximities[column] = Statistics.get_proximities(bin_edges, counts, counts)
+        medians[column] = np.median(variable.values)

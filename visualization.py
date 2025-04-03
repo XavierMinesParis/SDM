@@ -13,8 +13,8 @@ class Visualization:
     
     def plot_concentration(species, column):
         plt.plot(Stations.ubiquist_proximities[column], label="Poximity of the ubiquist species")
-        plt.plot(species.proximities[column], label="Proximity of " + species.latin_name)
-        plt.plot(species.concentrations[column], label='Concentration')
+        plt.plot(species.variables[column].proximities, label="Proximity of " + species.latin_name)
+        plt.plot(species.variables[column].concentrations, label='Concentration')
         plt.legend()
         plt.title('Concentration for ' + Stations.dict_variables[column])
         plt.show()
@@ -27,12 +27,10 @@ class Visualization:
         counts, bin_edges = Stations.distributions[column]
         plt.bar(x=bin_edges[:-1], height=counts, width=np.diff(bin_edges), align='edge', alpha=0.5, color='grey')
         for s in species:
-            data = s.data
-            if column in data.columns:
-                counts, bin_edges = s.distributions[column]
-                plt.bar(x=bin_edges[:-1], height=counts, width=np.diff(bin_edges),
-                        align='edge', alpha=0.5, label=s.latin_name)
-                plt.axvline(bin_edges[s.optimums[column][0]])
+            variable = s.variables[column]
+            plt.bar(x=bin_edges[:-1], height=variable.counts, width=np.diff(bin_edges),
+                    align='edge', alpha=0.5, label=s.latin_name)
+            plt.axvline(bin_edges[variable.optimum_range])
         plt.legend()
         plt.title("Distribution by " + Stations.dict_variables[column])
         plt.show()
@@ -51,36 +49,30 @@ class Visualization:
         tmin_columns = ['tn' + str(i).zfill(2) + '_61_90' for i in range (1, 13)]
         rain_columns = ['rr' + str(i).zfill(2) + '_61_90' for i in range (1, 13)]
         
+        
         for s in species:
-            tmax_powers = np.array([s.optimums[column][0] for column in tmax_columns])
-            tmax_values = []
-            for tmax_power, column in zip(tmax_powers, tmax_columns):
-                bin_edges = s.distributions[column][1]
-                tmax_values.append(bin_edges[tmax_power])
-            tmax_optimums = [s.optimums[column][1] for column in tmax_columns]
+            tmax_values = [s.variables[column].optimum_value for column in tmax_columns]
             plt.xticks(np.arange(12), labels)
             ax1.bar(np.arange(12), tmax_values, alpha=0.4, label=s.latin_name)
-            ax1.set_title("Max Temperature")
             
-            tmin_powers = np.array([s.optimums[column][0] for column in tmin_columns])
-            tmin_values = []
-            for tmin_power, column in zip(tmin_powers, tmin_columns):
-                bin_edges = s.distributions[column][1]
-                tmin_values.append(bin_edges[tmin_power])
-            tmin_optimums = [s.optimums[column][1] for column in tmin_columns]
+            tmin_values = [s.variables[column].optimum_value for column in tmin_columns]
             plt.xticks(np.arange(12), labels)
             ax2.bar(np.arange(12), tmin_values, alpha=0.4)
-            ax2.set_title("Min Temperature")
             
-            rain_powers = np.array([s.optimums[column][0] for column in rain_columns])
-            rain_values = []
-            for rain_power, column in zip(rain_powers, rain_columns):
-                bin_edges = s.distributions[column][1]
-                rain_values.append(bin_edges[rain_power])
-            rain_optimums = [s.optimums[column][1] for column in rain_columns]
+            rain_values = [s.variables[column].optimum_value for column in rain_columns]
             plt.xticks(np.arange(12), labels)
             ax3.bar(np.arange(12), rain_values, alpha=0.4)
-            ax3.set_title("Rainfall")
+        
+        ubi_tmax = [Stations.medians[column] for column in tmax_columns]
+        ax1.bar(np.arange(12), ubi_tmax, edgecolor='black', facecolor=(0, 0, 0, 0), label="Ubiquist species")
+        ubi_tmin = [Stations.medians[column] for column in tmin_columns]
+        ax2.bar(np.arange(12), ubi_tmin, edgecolor='black', facecolor=(0, 0, 0, 0))
+        ubi_rain = [Stations.medians[column] for column in rain_columns]
+        ax3.bar(np.arange(12), ubi_rain, edgecolor='black', facecolor=(0, 0, 0, 0))
+           
+        ax1.set_title("Max Temperature")
+        ax2.set_title("Min Temperature")
+        ax3.set_title("Rainfall")
         
         fig.tight_layout()
         lines_labels = [ax.get_legend_handles_labels() for ax in fig.axes]
