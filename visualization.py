@@ -25,7 +25,8 @@ class Visualization:
             species = [species]
         
         counts, bin_edges = Stations.distributions[column]
-        plt.bar(x=bin_edges[:-1], height=counts, width=np.diff(bin_edges), align='edge', alpha=0.5, color='grey')
+        plt.bar(x=bin_edges[:-1], height=counts, width=np.diff(bin_edges),
+                align='edge', alpha=0.5, color='grey', label='Ubiquist species')
         for s in species:
             variable = s.variables[column]
             plt.bar(x=bin_edges[:-1], height=variable.counts, width=np.diff(bin_edges),
@@ -42,7 +43,7 @@ class Visualization:
             
         labels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
-        fig.suptitle(str([s.latin_name[: 20] for s in species]))
+        fig.suptitle("Optimums of " + str([s.latin_name[: 20] for s in species]))
         plt.setp((ax1, ax2, ax3), xticks=np.arange(12), xticklabels=labels)
         
         tmax_columns = ['tx' + str(i).zfill(2) + '_61_90' for i in range (1, 13)]
@@ -70,8 +71,8 @@ class Visualization:
         ubi_rain = [Stations.medians[column] for column in rain_columns]
         ax3.bar(np.arange(12), ubi_rain, edgecolor='black', facecolor=(0, 0, 0, 0))
            
-        ax1.set_title("Max Temperature")
-        ax2.set_title("Min Temperature")
+        ax1.set_title("Temperature Day")
+        ax2.set_title("Temperature Night")
         ax3.set_title("Rainfall")
         
         fig.tight_layout()
