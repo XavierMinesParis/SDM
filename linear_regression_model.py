@@ -1,23 +1,25 @@
 # +
 import numpy as np
+from statsmodels.api import GLM
 import statsmodels.api as sm
 
-class Linear_Regression_Model:
+class Linear_Regression_Model(GLM):
     
-    def __init__(self, model=None):
+    def __init__(self, **kwds):
+        self.model = None
+        self.res = None
+
+    def fit(self, x, y):
+        endog, exog = y, np.array(x).transpose()
+        exog = sm.add_constant(exog)
+        model = sm.GLM(endog, exog, family=sm.families.Binomial())
+        self.res = model.fit()
         self.model = model
     
-    def fit(self, x, y, verbose=False):
-        x_train = np.column_stack(x)
-        model = sm.GLM(y, sm.add_constant(x_train), family=sm.families.Binomial())
-        self.model = model.fit()
-        if verbose:
-            print(model.summary())
-    
-    def predict_proba(self, x):
-        x_test = np.column_stack(x)
-        return self.model.predict(sm.add_constant(x_test))
-    
     def predict(self, x):
-        proba_prediction = Linear_Regression_Model.predict_proba(self, x)
-        return (proba_prediction >= 0.5).astype(int)
+        x_test = np.array(x).transpose()
+        x_test = sm.add_constant(x_test)
+        return self.res.predict(x_test)
+    
+    def get_aic(self):
+        return self.res.aic

@@ -44,7 +44,7 @@ class Empirical_Model:
             self.optimum_value.append(optimum_value)
             self.indicator_power.append(indicator_power)
     
-    def predict_proba(self, x):
+    def predict(self, x):
         n = len(x)
         probas = 0
         for i, variable in enumerate(x):
