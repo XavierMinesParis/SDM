@@ -29,17 +29,32 @@ class Extractor:
     This class aims to extract climate data given a set of points.
     """
     
-    def __init__(self, input_file, output_file, id_=None):
+    def __init__(self, input_file, output_file, id_stations_name=None, id_species_name=None):
         self.input_file = input_file
         self.output_file = output_file
-        self.id_ = id_
+        self.id_stations_name = id_stations_name
+        self.id_species_name = id_species_name
         
     def extract(self, verbose=True):
+        
+        id_species_name = self.id_species_name
+        id_stations_name = self.id_stations_name
+        
         df = pd.read_csv(self.input_file, sep=",", on_bad_lines='skip')
-        if self.id_ is None:
-            df = df[['lon', 'lat']].dropna()
-        else:
-            df = df[[self.id_, 'lon', 'lat']].dropna()
+        
+        filter_ = ['lon', 'lat']
+        if id_species_name is not None:
+            filter_.append(id_species_name)
+        if id_stations_name is not None:
+            filter_.append(id_stations_name)
+            
+        if id_species_name is not None and id_stations_name is not None:
+            df = df.drop_duplicates(subset=[id_stations_name,
+                                            id_species_name], keep='first') # Droping multiple records at one location
+        elif id_stations_name is not None:
+            df = df.drop_duplicates(subset=id_stations_name, keep='first')
+            
+        df = df[filter_].dropna()    
         coordinates = list(zip(df['lon'], df['lat']))
         
         tif_files = glob.glob(os.path.join("Current/", "*.tif"))
@@ -52,16 +67,21 @@ class Extractor:
                 var_name = os.path.splitext(os.path.basename(tif_file))[0]
                 
                 if var_name in dict_variables.keys():
-                    values = [val[0] for val in src.sample(coordinates)]
+                    scale = src.scales[0] if src.scales else 1.0
+                    offset = src.offsets[0] if src.offsets else 0.0
+                    values = [val[0] * scale + offset for val in src.sample(coordinates)]
                     df[dict_variables[var_name]] = values
-                    
-        if self.id_ is None:
-            df = df[df.drop(columns=['lon', 'lat']).values.sum(axis=1) != 0] # Dropping points out of France
-        else:
-            df = df[df.drop(columns=[self.id_, 'lon', 'lat']).values.sum(axis=1) != 0]
+        
+        df = df[df.drop(columns=filter_).values.sum(axis=1) != 0] # Dropping points out of France
+        
+        if id_species_name:
+            df[id_species_name] = df[id_species_name].astype(int)
+        if id_stations_name:
+            df[id_stations_name] = df[id_stations_name].astype(int)
+        df = df.dropna()
         
         if verbose:
             print("Extraction completed")
             print(df.head())
-            print("Shape of the data: ", df.shape)
+            
         df.to_csv(self.output_file, index=False)
