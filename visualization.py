@@ -1,15 +1,65 @@
+# -*- coding: utf-8 -*-
 # +
 import matplotlib. pyplot as plt
 # %matplotlib inline
 plt.rcParams['figure.figsize'] = (15, 5)
 from stations import *
-from species import *
+from sklearn.metrics import roc_curve, auc
 
 class Visualization:
     """
     Displays information about species and its relationships with climatic variables: the distributions,
     the concentrations, the climatic optimums, etc.
     """
+    
+    def plot_area(species):
+        grid = pd.read_csv('Grid/final.csv', sep=",")
+        plt.rcParams['figure.figsize'] = (10, 7)
+        plt.scatter(grid['lon'], grid['lat'], c='beige', s=1)
+        for s in species:
+            plt.scatter(s.locations['lon'], s.locations['lat'], s=1, label=s.latin_name)
+        plt.ylim(41, 52)
+        plt.xlim(-5, 10)
+        plt.legend()
+        plt.show()
+        
+    def plot_prediction_maps(species):
+        grid = pd.read_csv('Grid/grid_climate.csv', sep=",")
+        stations = pd.read_csv('stations_climate.csv', sep=",")
+        x_test = grid[dict_variables.values()].values
+        n_species = len(species)
+
+        plt.rcParams['figure.figsize'] = (15, 5 * n_species)
+        fig, axs = plt.subplots(n_species, 3, squeeze=False)  # ensures axs is always 2D
+
+        for i, s in enumerate(species):
+            
+            # Plot Presence and Absence points
+            axs[i, 0].scatter(stations['lon'], stations['lat'], c='gray', cmap='viridis', s=1, alpha=0.07, label="Absence points")
+            axs[i, 0].scatter(s.locations['lon'], s.locations['lat'], c="lime", s=1, alpha=0.5, label="Presence points")
+            axs[i, 0].set_title(s.latin_name + ' - Sampling Points')
+            axs[i, 0].set_xlim(-5, 10)
+            axs[i, 0].set_ylim(41, 52)
+            
+            # Predictions
+            lr_pred = s.lr_model.predict(x_test)
+            em_pred = s.em_model.predict(x_test)
+
+            # Plot Logistic Regression
+            axs[i, 1].scatter(grid['lon'], grid['lat'], c=np.log(1 + lr_pred), cmap='viridis', s=8)
+            axs[i, 1].set_title(s.latin_name + ' — Logistic Regression (log scale)')
+            axs[i, 1].set_xlim(-5, 10)
+            axs[i, 1].set_ylim(41, 52)
+
+            # Plot Empirical Model
+            axs[i, 2].scatter(grid['lon'], grid['lat'], c=em_pred, cmap='viridis', s=8)
+            axs[i, 2].set_title(s.latin_name + ' — Empirical Model')
+            axs[i, 2].set_xlim(-5, 10)
+            axs[i, 2].set_ylim(41, 52)
+
+        plt.tight_layout()
+        plt.show()
+
     
     def plot_concentration(species, column):
         plt.plot(Stations.ubiquist_proximities[column], label="Poximity of the ubiquist species")
@@ -80,3 +130,19 @@ class Visualization:
         lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
         fig.legend(lines, labels, loc='upper left', ncol=1)
         plt.show()
+        
+    def plot_roc(y, y_predict, title='ROC curve'):
+        fpr, tpr, thresholds = roc_curve(y, y_predict)
+        roc_auc = auc(fpr, tpr)
+
+        plt.plot(fpr, tpr, color='blue', lw=2, label=f'ROC curve (AUC = {roc_auc:.2f})')
+        plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate (FPR)')
+        plt.ylabel('True Positive Rate (TPR)')
+        plt.title(title)
+        plt.legend(loc="lower right")
+        plt.show()
+        
+    

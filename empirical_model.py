@@ -15,7 +15,7 @@ class EmpiricalModel:
         self.indicator_power = indicator_power
         self.x, self.y = None, None
     
-    def fit(self, x, y=None, bins=100, verbose=False):
+    def fit(self, x, y=None, scenario='current', bins=100, verbose=False):
         """
         By default, a fit for presence-absence data provided with x and y.
         In this case, the ubiquist proximities are computed.
@@ -40,8 +40,8 @@ class EmpiricalModel:
                 
             if y is None:
                 column = x.columns[i]
-                p, bin_edges = Stations.distributions[column] # PDF of the stations
-                ubiquist_proximities = Stations.ubiquist_proximities[column]
+                p, bin_edges = Stations.distributions[scenario][column] # PDF of the stations
+                ubiquist_proximities = Stations.ubiquist_proximities[scenario][column]
                 
                 q, bin_edges = np.histogram(variable, bins=bin_edges, density=True) # PDF of the detections
             else:
@@ -70,10 +70,16 @@ class EmpiricalModel:
         m = x.shape[1]
         probas = 0
         for i in range(m):
-            variable = x[: , i]
+            
+            if isinstance(x, pd.DataFrame):
+                variable = x[x.columns[i]]
+            else:
+                variable = x[: , i]
+                
             indices = np.digitize(variable, self.bin_edges[i])
             indices = list(np.maximum(np.minimum(len(self.bin_edges[i]) - 2, indices), 0))
             probas += self.concentrations[i][indices] / m
+            
         return probas
         
     def get_aic(self):
