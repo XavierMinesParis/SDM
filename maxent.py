@@ -1,6 +1,11 @@
 # +
 import numpy as np
 from statsmodels.base.model import GenericLikelihoodModel, GenericLikelihoodModelResults
+from sklearn import metrics
+from statistics import *
+from scipy.stats import spearmanr
+import warnings
+warnings.filterwarnings("ignore")
 
 class Maxent(GenericLikelihoodModel):
     
@@ -11,6 +16,7 @@ class Maxent(GenericLikelihoodModel):
         self.n_presence = len(presence)
         self.alpha = base_alpha * np.std(self.presence, axis=0) / np.sqrt(self.n_presence)
         self.res = None
+        self.auc, self.rmse, self.spearman = None, None, None
 
         endog, exog = np.ones(self.n_presence), presence
         super(Maxent, self).__init__(endog=endog, exog=exog)
@@ -39,3 +45,38 @@ class Maxent(GenericLikelihoodModel):
 
     def get_aic(self):
         return GenericLikelihoodModelResults(self, self.res).aic
+    
+    def get_auc(self, x_test, y_test):
+        y_pred = Maxent.predict(self, x_test)
+        y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
+        fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
+        self.auc = metrics.auc(fpr, tpr)
+        return self.auc
+    
+    def get_rmse(self, x_test, y_test):
+        """
+        y_test belongs to [0, 1]
+        """
+        y_pred = Maxent.predict(self, x_test)
+        y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
+        self.rmse = Statistics.rmse(y_test, y_pred)
+        return self.rmse
+    
+    def get_spearman(self, x_test, y_test):
+        """
+        y_test belongs to [0, 1]
+        """
+        y_pred = Maxent.predict(self, x_test)
+        y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
+        self.spearman = spearmanr(y_test, y_pred)[0]
+        return self.spearman
+    
+    def __repr__(self):
+        
+        text = "| Maxent"
+        text += "\n| Number of variables: " + str(self.m)
+        text += "\n| RMSE: " + str(self.rmse)[: 4]
+        text += "\n| AUC: " + str(self.auc)[: 4]
+        text += "\n| Spearman's Rank Correlation Index: " + str(self.spearman)[: 4]
+
+        return text

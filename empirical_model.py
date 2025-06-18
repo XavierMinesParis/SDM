@@ -2,6 +2,10 @@
 import numpy as np
 from statistics import *
 from stations import *
+from sklearn import metrics
+from scipy.stats import spearmanr
+import warnings
+warnings.filterwarnings("ignore")
 
 class EmpiricalModel:
     
@@ -14,6 +18,7 @@ class EmpiricalModel:
         self.optimum_value = optimum_value
         self.indicator_power = indicator_power
         self.x, self.y = None, None
+        self.auc, self.rmse, self.spearman = None, None, None
     
     def fit(self, x, y=None, scenario='current', bins=100, verbose=False):
         """
@@ -86,3 +91,38 @@ class EmpiricalModel:
         y_pred = self.predict(self.x)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred))
         return Statistics.rmse(self.y, y_pred)
+    
+    def get_auc(self, x_test, y_test):
+        y_pred = EmpiricalModel.predict(self, x_test)
+        y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
+        fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
+        self.auc = metrics.auc(fpr, tpr)
+        return self.auc
+    
+    def get_rmse(self, x_test, y_test):
+        """
+        y_test belongs to [0, 1]
+        """
+        y_pred = EmpiricalModel.predict(self, x_test)
+        y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
+        self.rmse = Statistics.rmse(y_test, y_pred)
+        return self.rmse
+    
+    def get_spearman(self, x_test, y_test):
+        """
+        y_test belongs to [0, 1]
+        """
+        y_pred = EmpiricalModel.predict(self, x_test)
+        y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
+        self.spearman = spearmanr(y_test, y_pred)[0]
+        return self.spearman
+    
+    def __repr__(self):
+        
+        text = "| Empirical Model"
+        text += "\n| Number of variables: " + str(self.m)
+        text += "\n| RMSE: " + str(self.rmse)[: 4]
+        text += "\n| AUC: " + str(self.auc)[: 4]
+        text += "\n| Spearman's Rank Correlation Index: " + str(self.spearman)[: 4]
+
+        return text

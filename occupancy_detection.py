@@ -4,6 +4,11 @@ import statsmodels.api as sm
 from scipy import stats
 from statsmodels.base.model import GenericLikelihoodModel, GenericLikelihoodModelResults
 from scipy.special import expit
+from sklearn import metrics
+from statistics import *
+from scipy.stats import spearmanr
+import warnings
+warnings.filterwarnings("ignore")
 
 class OccupancyDetection(GenericLikelihoodModel):
     
@@ -14,6 +19,7 @@ class OccupancyDetection(GenericLikelihoodModel):
         self.K = K
         self.res = None
         self.m = self.exog.shape[1]
+        self.auc, self.rmse, self.spearman = None, None, None
 
     def nloglikeobs(self, params):
         
@@ -61,3 +67,39 @@ class OccupancyDetection(GenericLikelihoodModel):
     
     def get_aic(self):
         return GenericLikelihoodModelResults(self, self.res).aic
+    
+    def get_auc(self, x_test, y_test):
+        """
+        y_test belongs to {0, 1}
+        """
+        y_pred = OccupancyDetection.predict(self, x_test)[0]
+        fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
+        self.auc = metrics.auc(fpr, tpr)
+        return self.auc
+    
+    def get_rmse(self, x_test, y_test):
+        """
+        y_test belongs to [0, 1]
+        """
+        y_pred = OccupancyDetection.predict(self, x_test)[0]
+        self.rmse = Statistics.rmse(y_test, y_pred)
+        return self.rmse
+    
+    def get_spearman(self, x_test, y_test):
+        """
+        y_test belongs to [0, 1]
+        """
+        y_pred = OccupancyDetection.predict(self, x_test)[0]
+        self.spearman = spearmanr(y_test, y_pred)[0]
+        return self.spearman
+    
+    def __repr__(self):
+        
+        text = "| Occupancy Detection Model"
+        text += "\n| Number of trials: " + str(self.K)
+        text += "\n| Number of variables: " + str(self.m)
+        text += "\n| RMSE: " + str(self.rmse)[: 4]
+        text += "\n| AUC: " + str(self.auc)[: 4]
+        text += "\n| Spearman's Rank Correlation Index: " + str(self.spearman)[: 4]
+
+        return text

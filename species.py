@@ -3,7 +3,7 @@
 from extractor import *
 import pandas as pd
 import numpy as np
-from linear_regression import *
+from logistic_regression import *
 from empirical_model import *
 
 class Species:
@@ -78,7 +78,7 @@ class Species:
         x_train = np.concatenate((x_presence, x_absence))
         y_train = np.concatenate((y_presence, y_absence))
 
-        lr_model = LinearRegression()
+        lr_model = LogisticRegression()
         lr_model.fit(x_train, y_train)
         self.lr_model = lr_model
 
