@@ -1,8 +1,7 @@
 # +
-import numpy as np
-from statistics import *
-from stations import *
-from sklearn import metrics
+from constants import *
+from extractor import *
+from sklearn.metrics import roc_curve, auc, mean_squared_error
 from scipy.stats import spearmanr
 import warnings
 warnings.filterwarnings("ignore")
@@ -20,13 +19,8 @@ class EmpiricalModel:
         self.x, self.y = None, None
         self.auc, self.rmse, self.spearman = None, None, None
     
-    def fit(self, x, y=None, scenario='current', bins=100, verbose=False):
-        """
-        By default, a fit for presence-absence data provided with x and y.
-        In this case, the ubiquist proximities are computed.
-        If y is set to None, x is supposed to contain presence-only data.
-        In this case, the ubiquist proximities are imported from the Stations class
-        """
+    def fit(self, x, y=None, stations=None, bins=100, verbose=False):
+
         self.x, self.y = x, y
         m = x.shape[1]
         self.bin_edges = []
@@ -43,21 +37,18 @@ class EmpiricalModel:
             else:
                 variable = x[: , i]
                 
-            if y is None:
-                column = x.columns[i]
-                p, bin_edges = Stations.distributions[scenario][column] # PDF of the stations
-                ubiquist_proximities = Stations.ubiquist_proximities[scenario][column]
-                
-                q, bin_edges = np.histogram(variable, bins=bin_edges, density=True) # PDF of the detections
-            else:
-                p, bin_edges = np.histogram(variable, bins=bins, density=True) # PDF of the stations
+            if stations is None: # Simulations
+                p = p, bin_edges = np.histogram(variable, bins=bins, density=True)
                 p /= np.sum(p)
-                ubiquist_proximities = Statistics.get_proximities(bin_edges, p, p)
-            
-                q, bin_edges = np.histogram(variable[y == 1], bins=bins, density=True) # PDF of the detections
-            
+                ubiquist_proximities = EmpiricalModel.get_proximities(bin_edges, p, p)
+            else: # Real case studies
+                column = CLIMATE_VARIABLES[i]
+                p, bins = stations.distributions[column]
+                ubiquist_proximities = stations.ubiquist_proximities[column]
+                
+            q, bin_edges = np.histogram(variable[y == 1], bins=bins, density=True) # PDF of the detections
             q /= np.sum(q)
-            proximities = Statistics.get_proximities(bin_edges, p, q)
+            proximities = EmpiricalModel.get_proximities(bin_edges, p, q)
             
             concentrations = 1 - (1 - proximities) / (1 - ubiquist_proximities + 10**(-6))
             optimum_range = np.argmax(concentrations)
@@ -70,6 +61,28 @@ class EmpiricalModel:
             self.optimum_range.append(optimum_range)
             self.optimum_value.append(optimum_value)
             self.indicator_power.append(indicator_power)
+            
+    @staticmethod
+    def get_proximities(bin_edges, p, q):
+        """
+        Applies the empirical model and returns the list of proximites for one climatic variable.
+        """
+
+        F = np.cumsum(q)
+        u = p * (F - q /2 - 1 / 2)
+        
+        n = len(p)
+        g = np.zeros(n)
+ 
+        P, Q = np.meshgrid(p, q)
+        g[0] = np.sum(np.tril((P * Q)))
+        g[0] -= (p[0] * (1 - q[0])) / 2
+        g[0] -= np.sum(np.dot(p, q)) / 2
+        
+        for k in range(n-1):
+            g[k+1] = g[k] + u[k] + u[k+1]
+            
+        return 1 - g
 
     def predict(self, x):
         m = x.shape[1]
@@ -90,13 +103,13 @@ class EmpiricalModel:
     def get_aic(self):
         y_pred = self.predict(self.x)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred))
-        return Statistics.rmse(self.y, y_pred)
+        return mean_squared_error(self.y, y_pred , squared=False)
     
     def get_auc(self, x_test, y_test):
         y_pred = EmpiricalModel.predict(self, x_test)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
-        fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
-        self.auc = metrics.auc(fpr, tpr)
+        fpr, tpr, thresholds = roc_curve(y_test, y_pred, pos_label=1)
+        self.auc = auc(fpr, tpr)
         return self.auc
     
     def get_rmse(self, x_test, y_test):
@@ -105,7 +118,7 @@ class EmpiricalModel:
         """
         y_pred = EmpiricalModel.predict(self, x_test)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
-        self.rmse = Statistics.rmse(y_test, y_pred)
+        self.rmse = mean_squared_error(y_test, y_pred , squared=False)
         return self.rmse
     
     def get_spearman(self, x_test, y_test):

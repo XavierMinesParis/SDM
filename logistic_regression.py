@@ -1,8 +1,7 @@
 # +
 import numpy as np
 import statsmodels.api as sm
-from sklearn import metrics
-from statistics import *
+from sklearn.metrics import roc_curve, auc, mean_squared_error
 from scipy.stats import spearmanr
 import warnings
 warnings.filterwarnings("ignore")
@@ -12,7 +11,7 @@ class LogisticRegression:
     def __init__(self):
         self.model = None
         self.res = None
-        self.m = None  # Save number of features (including constant)
+        self.m = None  # Number of climate variables
         self.auc, self.rmse, self.spearman = None, None, None
     
     def fit(self, x, y):
@@ -34,8 +33,8 @@ class LogisticRegression:
     
     def get_auc(self, x_test, y_test):
         y_pred = LogisticRegression.predict(self, x_test)
-        fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
-        self.auc = metrics.auc(fpr, tpr)
+        fpr, tpr, thresholds = roc_curve(y_test, y_pred, pos_label=1)
+        self.auc = auc(fpr, tpr)
         return self.auc
     
     def get_rmse(self, x_test, y_test):
@@ -43,7 +42,7 @@ class LogisticRegression:
         y_test belongs to [0, 1]
         """
         y_pred = LogisticRegression.predict(self, x_test)
-        self.rmse = Statistics.rmse(y_test, y_pred)
+        self.rmse = mean_squared_error(y_test, y_pred , squared=False)
         return self.rmse
     
     def get_spearman(self, x_test, y_test):

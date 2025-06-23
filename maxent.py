@@ -1,8 +1,7 @@
 # +
 import numpy as np
 from statsmodels.base.model import GenericLikelihoodModel, GenericLikelihoodModelResults
-from sklearn import metrics
-from statistics import *
+from sklearn.metrics import roc_curve, auc, mean_squared_error
 from scipy.stats import spearmanr
 import warnings
 warnings.filterwarnings("ignore")
@@ -12,7 +11,7 @@ class Maxent(GenericLikelihoodModel):
     def __init__(self, presence, background, base_alpha=1):
         self.presence = presence
         self.background = background
-        self.m = presence.shape[1] # Number of climatic variables
+        self.m = presence.shape[1] # Number of climate variables
         self.n_presence = len(presence)
         self.alpha = base_alpha * np.std(self.presence, axis=0) / np.sqrt(self.n_presence)
         self.res = None
@@ -47,28 +46,35 @@ class Maxent(GenericLikelihoodModel):
         return GenericLikelihoodModelResults(self, self.res).aic
     
     def get_auc(self, x_test, y_test):
+        
         y_pred = Maxent.predict(self, x_test)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
-        fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
-        self.auc = metrics.auc(fpr, tpr)
+        
+        fpr, tpr, thresholds = roc_curve(y_test, y_pred, pos_label=1)
+        self.auc = auc(fpr, tpr)
+        
         return self.auc
     
     def get_rmse(self, x_test, y_test):
         """
         y_test belongs to [0, 1]
         """
+        
         y_pred = Maxent.predict(self, x_test)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
-        self.rmse = Statistics.rmse(y_test, y_pred)
+        self.rmse = mean_squared_error(y_test, y_pred, squared=False)
+        
         return self.rmse
     
     def get_spearman(self, x_test, y_test):
         """
         y_test belongs to [0, 1]
         """
+        
         y_pred = Maxent.predict(self, x_test)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
         self.spearman = spearmanr(y_test, y_pred)[0]
+        
         return self.spearman
     
     def __repr__(self):
