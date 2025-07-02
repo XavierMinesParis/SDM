@@ -4,8 +4,21 @@ from empirical_model import *
 
 class Stations:
     
-    def __init__(self, file_name, id_name, locations=None, ids=None,  
+    def __init__(self, file_name, id_name, ids=None, locations=None, 
                  data=None, distributions=None, ubiquist_proximities=None):
+        """
+        A Stations object designed for ecological applications.
+        
+        Attributes:
+        file_name (str): Source file of stations.
+        id_name (str): Column for stations ids.
+        ids (pd.Series): Ids of the stations.
+        locations (pd.Dataframe): Longitude and latitude of the stations.
+        data (pd.Dataframe): Climate data.
+        distributions (dict): Keys are names of climate variables and values are tuple of size 2.
+        The two values are the counts ands bin edges of the climate histogram of the corresponding climate variable.
+        ubiquist_proximities (dict): Keys are names of climate variables and values are lists of proximity values.
+        """
         
         self.file_name = file_name
         self.id_name = id_name 

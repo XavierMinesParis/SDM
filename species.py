@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # +
 from logistic_regression import *
+from logistic_regression2 import *
 from empirical_model import *
 from extractor import *
 
@@ -9,19 +10,25 @@ class Species:
     def __init__(self, file_name, stations, id_name=None, id_=None,
                  id_stations_name=None, n_presence=None, train_status=False):
         """
-        Species object.
+        A Species object designed for ecological applications.
 
         Attributes:
-        file_name (str): Name of the csv file with species locations
+        file_name (str): Name of the csv file with species locations.
         stations (Stations): Used to keep only valid points at climate stations, and used for training.
-        id_name (str): Name of the column providing species ids in the species table
-        id_ (int): Name of the species id
-        id_stations_name: Column of the dataframe with stations ids
+        id_name (str): Name of the column providing species ids in the species table.
+        id_ (int): Species id.
         locations (pd.Dataframe): Locations of samples.
-        n_presence
-        
-        id_stations (pd.Series)
-        latin_name (str)
+        n_presence (int): Number of points where the species was censed.
+        id_stations (pd.Series): Column of the dataframe with stations ids at presence locations.
+        latin_name (str): Scientific name.
+        x_train (np.ndarray): Climate data.
+        y_train (np.ndarray): Presence-absence data, with labels 0 and 1.
+        models (dict): Keys are names chosen by the user and values might be different kinds of models:
+            - LogisticRegression
+            - LogisticRegresson2
+            - OccupancyDetection
+            - Maxent
+            - EmpiricalModel
         """
         
         df = pd.read_csv('Data/' + file_name, sep=",")
@@ -45,20 +52,8 @@ class Species:
         self.n_presence = len(self.locations)
         self.id_stations = id_stations
         self.latin_name = latin_name
-
-        self.train_status = train_status
-        self.x_train = None
-        self.y_train = None
-        self.lr_model = None
-        self.em_model = None
         
-    def train_models(self, stations=None):
-        
-        self.train_status = True
-        
-        if stations is None:
-            stations = self.stations
-            
+        # Building the training dataset.
         id_stations = stations.ids.values
         
         background = stations.climate_data
@@ -75,34 +70,41 @@ class Species:
         y_train = np.concatenate((y_presence, y_absence))
         self.x_train = x_train
         self.y_train = y_train
-
-        lr_model = LogisticRegression()
-        lr_model.fit(x_train, y_train)
-        self.lr_model = lr_model
+        self.models = dict()
         
-
-        em_model = EmpiricalModel()
-        em_model.fit(x_train, y_train, stations=stations)
-        self.em_model = em_model
+    def add_model(self, name, model):
+        """
+        Adds a trained model to the models attribute.
+        """
+        
+        model.fit(self.x_train, self.y_train)
+        self.models[name] = model
         
     def test_models(self, locations_file_name=None, climate_folder=None):
+        """
+        Returns a dictionary where keys are names of models and values are predictions.
+        """
         
         extractor = Extractor(locations_file_name, climate_folder)
         climate_data = extractor.extract(verbose=False)[CLIMATE_VARIABLES]
         x_test = climate_data.values
         
-        return self.lr_model.predict(x_test), self.em_model.predict(x_test)
+        res = dict()
+        
+        for name, model in self.models.items():
+            res[name] = model.predict(x_test)
+            
+        return res
         
     def __repr__(self):
         
         text = "| Name: " + self.latin_name
         text += "\n| ID (" + self.id_name + "): " + str(self.id_)
         text += "\n| Number of samples: " + str(self.n_presence)
+        text += "\n| Source of stations locations: " + self.stations.file_name
         text += "\n| Source of species locations: " + self.file_name
-        
-        if self.train_status:
-            text += "\n| Number of stations: " + str(len(self.x_train))
-            text += "\n|LR training AUC: " + str(self.lr_model.get_auc(self.x_train, self.y_train))[: 4]
-            text += "\n|EM training AUC: " + str(self.em_model.get_auc(self.x_train, self.y_train))[: 4]
+        text += "\n| Number of stations: " + str(len(self.x_train))
+        for name, model in self.models.items():
+            text += "\n|" + name + " training AUC: " + str(model.get_auc(self.x_train, self.y_train))[: 4]
 
         return text
