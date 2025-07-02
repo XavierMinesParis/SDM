@@ -10,6 +10,22 @@ class EmpiricalModel:
     
     def __init__(self, bin_edges=None, proximities=None, concentrations=None, optimum_range=None,
                 optimum_value=None, indicator_power=None):
+        """
+        This model 
+
+        Attributes :
+        bin_edges (list): Its ith element is a list of bins for the histogram of the ith climate variable.
+        proximities (list): Its element of index [i][j] is the value of proximity at the jth bin of the ith climate variable.
+        concentrations (list): Same as proximities.
+        optimum_range (list): Its ith element is the index of the bin in the ith histogram with highest concentration.
+        optimum_value (list): Its ith element is the the bin value in the ith histogram with highest concentration.
+        indicator_power (list): Its ith element is the maximum concentration value of the ith histogram.
+        x (pd.Dataframe or np.ndarray): Climate data.
+        y (pd.Series or np.ndarray): Presence-absence data, labeled 0 and 1.
+        auc (float): AUC discrimination value.
+        rmse (float): Root Mean Squared Error.
+        spearman (float): Spearman's rank correlation coefficient.
+        """
         self.bin_edges = bin_edges
         self.proximities = proximities
         self.concentrations = concentrations
@@ -65,7 +81,7 @@ class EmpiricalModel:
     @staticmethod
     def get_proximities(bin_edges, p, q):
         """
-        Applies the empirical model and returns the list of proximites for one climatic variable.
+        Applies the empirical model and returns the list of proximites for one climate variable.
         """
 
         F = np.cumsum(q)
@@ -95,17 +111,25 @@ class EmpiricalModel:
                 variable = x[: , i]
                 
             indices = np.digitize(variable, self.bin_edges[i])
+            # Handling values out of the histogram.
             indices = list(np.maximum(np.minimum(len(self.bin_edges[i]) - 2, indices), 0))
             probas += self.concentrations[i][indices] / m
             
         return probas
         
     def get_aic(self):
+        """
+        Computes a quantity that is not the AIC (Akaike criterion) value.
+        But this syntax is used to perform model selection, as in other MLE models.
+        """
         y_pred = self.predict(self.x)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred))
         return mean_squared_error(self.y, y_pred , squared=False)
     
     def get_auc(self, x_test, y_test):
+        """
+        Computes the AUC discrimination value, with y_test belonging to {0, 1}.
+        """
         y_pred = EmpiricalModel.predict(self, x_test)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
         fpr, tpr, thresholds = roc_curve(y_test, y_pred, pos_label=1)
@@ -114,7 +138,7 @@ class EmpiricalModel:
     
     def get_rmse(self, x_test, y_test):
         """
-        y_test belongs to [0, 1]
+        Computes the Root Mean Squared Error value, with y_test belonging to [0, 1].
         """
         y_pred = EmpiricalModel.predict(self, x_test)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
@@ -123,7 +147,7 @@ class EmpiricalModel:
     
     def get_spearman(self, x_test, y_test):
         """
-        y_test belongs to [0, 1]
+        Computes the Spearman's rank correlation coefficient, with y_test belonging to [0, 1]
         """
         y_pred = EmpiricalModel.predict(self, x_test)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization

@@ -7,6 +7,9 @@ import warnings
 warnings.filterwarnings("ignore")
 
 class Maxent(GenericLikelihoodModel):
+    """
+    A Maximum Entropy model inherited from the GenericLikelihoodModel of the statsmodels module
+    """
     
     def __init__(self, presence, background, base_alpha=1):
         self.presence = presence
@@ -21,6 +24,9 @@ class Maxent(GenericLikelihoodModel):
         super(Maxent, self).__init__(endog=endog, exog=exog)
     
     def loglike(self, params):
+        """
+        Custom log-likelihood function.
+        """
         linear_term = np.sum(np.dot(self.exog, params)) # Sum over the presence points
         
         z = np.exp(np.dot(self.background, params)) # Partition function
@@ -57,7 +63,7 @@ class Maxent(GenericLikelihoodModel):
     
     def get_rmse(self, x_test, y_test):
         """
-        y_test belongs to [0, 1]
+        Computes the Root Mean Squared Error value, with y_test belonging to [0, 1].
         """
         
         y_pred = Maxent.predict(self, x_test)
@@ -68,7 +74,7 @@ class Maxent(GenericLikelihoodModel):
     
     def get_spearman(self, x_test, y_test):
         """
-        y_test belongs to [0, 1]
+        Computes the Spearman's rank correlation coefficient, with y_test belonging to [0, 1]
         """
         
         y_pred = Maxent.predict(self, x_test)

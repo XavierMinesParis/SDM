@@ -42,6 +42,7 @@ class Extractor:
         tif_files = glob.glob(os.path.join(self.climate_folder, "*.tif"))
         m = len(tif_files) # Number of climate variables
         
+        # Starting to extract climate data
         for i, tif_file in enumerate(tif_files):
             if verbose:
                 print("Extraction: " + str(int(100 * i / m)) + " %",end='\r')
@@ -49,7 +50,7 @@ class Extractor:
                 var_name = os.path.splitext(os.path.basename(tif_file))[0]
                 
                 if var_name in CLIMATE_VARIABLES: # Considering valid tif files
-                    scale = src.scales[0] if src.scales else 1.0
+                    scale = src.scales[0] if src.scales else 1.0 # Sometimes, temperature data is multiplied by 100
                     offset = src.offsets[0] if src.offsets else 0.0
                     values = [val[0] * scale + offset for val in src.sample(coordinates)]
                     df[var_name] = values
@@ -57,7 +58,7 @@ class Extractor:
 
         df = df[df['Rainfall January'].notna() & (df['Rainfall January'] >= 1)] # Dropping points out of France
         
-        if id_stations_name is not None:
+        if id_stations_name is not None: # Ensuring that ids are integers and not float values
             df[id_stations_name] = df[id_stations_name].astype(int)
             
         df = df.dropna()
@@ -68,7 +69,16 @@ class Extractor:
         
         return df
     
+    def export(self, extracted_data, output_file):
+        """
+        Exports climate data as a csv file.
+        """
+        extracted_data.to_csv('Data/' + output_file, index=False)
+    
     def filter_france(df):
+        """
+        Outdated
+        """
         geometry = [Point(xy) for xy in zip(df['lon'], df['lat'])]
         gdf_points = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
         gdf_france = gpd.read_file("Data/france_contour/France.shp")
@@ -78,5 +88,4 @@ class Extractor:
 
         return gdf_points[gdf_points.within(gdf_france.unary_union)]
             
-    def export(self, extracted_data, output_file):
-        extracted_data.to_csv('Data/' + output_file, index=False)
+    

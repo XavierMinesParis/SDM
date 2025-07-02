@@ -12,6 +12,10 @@ warnings.filterwarnings("ignore")
 class OccupancyDetection(GenericLikelihoodModel):
     
     def __init__(self, x, y, K=2, **kwds):
+        """
+        A MLE model inherited from the GenericLikelihoodModel of the statsmodels module.
+        It aims to model both presence and detection.
+        """
         
         endog, exog = y, x
         super(OccupancyDetection, self).__init__(endog, exog, **kwds)
@@ -69,7 +73,7 @@ class OccupancyDetection(GenericLikelihoodModel):
     
     def get_auc(self, x_test, y_test):
         """
-        y_test belongs to {0, 1}
+        Computes the AUC discrimination value, with y_test belonging to {0, 1}.
         """
         y_pred = OccupancyDetection.predict(self, x_test)[0]
         fpr, tpr, thresholds = roc_curve(y_test, y_pred, pos_label=1)
@@ -78,7 +82,7 @@ class OccupancyDetection(GenericLikelihoodModel):
     
     def get_rmse(self, x_test, y_test):
         """
-        y_test belongs to [0, 1]
+        Computes the Root Mean Squared Error value, with y_test belonging to [0, 1].
         """
         y_pred = OccupancyDetection.predict(self, x_test)[0]
         self.rmse = mean_squared_error(y_test, y_pred , squared=False)
@@ -86,7 +90,7 @@ class OccupancyDetection(GenericLikelihoodModel):
     
     def get_spearman(self, x_test, y_test):
         """
-        y_test belongs to [0, 1]
+        Computes the Spearman's rank correlation coefficient, with y_test belonging to [0, 1]
         """
         y_pred = OccupancyDetection.predict(self, x_test)[0]
         self.spearman = spearmanr(y_test, y_pred)[0]
