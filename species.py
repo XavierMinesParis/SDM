@@ -1,16 +1,22 @@
 # -*- coding: utf-8 -*-
 # +
+from stations import *
 from logistic_regression import *
 from logistic_regression2 import *
 from empirical_model import *
 from extractor import *
 
 class Species:
+    """
+    A Species object designed for ecological applications.
+    It is defined with a Stations object, and thus with climate data.
+    To date, this object can only encompass presence-absence SDMs.
+    """
     
     def __init__(self, file_name, stations, id_name=None, id_=None,
-                 id_stations_name=None, n_presence=None, train_status=False):
+                 id_stations_name=None, n_presence=None):
         """
-        A Species object designed for ecological applications.
+        Extracts presence-absence data from the species locations and the stations file.
 
         Attributes:
         file_name (str): Name of the csv file with species locations.
@@ -26,8 +32,6 @@ class Species:
         models (dict): Keys are names chosen by the user and values might be different kinds of models:
             - LogisticRegression
             - LogisticRegresson2
-            - OccupancyDetection
-            - Maxent
             - EmpiricalModel
         """
         

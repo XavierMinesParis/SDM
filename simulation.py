@@ -7,6 +7,10 @@ from scipy.special import expit
 from itertools import chain, combinations
 
 class Simulation:
+    """
+    This class aims to perform simulations for the LogisticRegression, OccupancyDetection, EmpiricalModel and Maxent models.
+     The environmental space is bidimensional. Because cross-variables are considered, the final space is 5-dimensional.
+    """
     
     LABELS = np.array([["Steep, constant", "Steep, positive", "Steep, negative", "Steep, independent"], 
                    ["Gentle, constant", "Gentle, positive", "Gentle, negative", "Gentle, independent"]])
@@ -14,6 +18,38 @@ class Simulation:
     SCENARIOS = [(i, j) for i in range(2) for j in range(4)]
     
     def __init__(self, n_train=400, K=2, min_size=1, scenarios=SCENARIOS):
+        """
+        Computes probabilities of occupancy, detection.
+        Creates the train and test datasets.
+        
+        Attributes:
+        n_train (int): Number of presence-absent points.
+        K (int): Number of attempts at one sampling location.
+        scenarios (set): Contains tuples that identify the climate scenarios considered in the simulation.
+        min_size (int): Between 1 and 5. It is the minimum size of subsets in the environmental space to achieve model selection.
+        cA_train (np.ndarray): Draws of the first climate variable.
+        cB_train (np.ndarray): Draws of the second climate variable.
+        X_train (list): Contains climate data for different subsets of variables.
+        psi_train (np.ndarray): Probabilities of occupancy.
+        p_train (np.ndarray): Probabilities of detection given species presence.
+        d_train (np.ndarray): Probabilities  of detection.
+        psk_train (np.ndarray): Probabilites of detection given species presence with K trials.
+        dsk_train (np.ndarray): Probabilities of detection with K trials.
+        Z_train (np.ndarray): Binary draw for occupancy, shape (2, 4, n_train).
+        Y_k_train (np.ndarray): # Binomial draw for detection.
+        Y_train (np.ndarray): # Binary detection, shape (2, 4, n_train).
+        cA_test (np.ndarray): Draws of the first climate variable.
+        cB_test (np.ndarray): Draws of the second climate variable.
+        X_test (list): Contains climate data for different subsets of variables.
+        psi_test (np.ndarray): Probabilities of occupancy.
+        p_test (np.ndarray): Probabilities of detection given species presence.
+        d_test (np.ndarray): Probabilities  of detection.
+        psk_test (np.ndarray): Probabilites of detection given species presence with K trials.
+        dsk_test (np.ndarray): Probabilities of detection with K trials.
+        Z_test (np.ndarray): Binary draw for occupancy, shape (2, 4, n_test).
+        Y_k_test (np.ndarray): # Binomial draw for detection.
+        Y_test (np.ndarray): # Binary detection, shape (2, 4, n_test).
+        """
 
         # Train data
         self.n_train = n_train
@@ -71,10 +107,15 @@ class Simulation:
         self.em_models = None
         self.lr_models = None
         self.od_models = None
+        self.maxent_models = None
     
     @staticmethod
     def get_subsets(iterable, min_size=1):
-        "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+        """
+        Returns the set of subsets of the iterable object.
+        All subsets with cardinality lower to min_size are discarded.
+        """
+        
         s = list(iterable)
         res = list(chain.from_iterable(combinations(s, r) for r in range(len(s)+1)))
         res_copy = res.copy()
@@ -84,6 +125,10 @@ class Simulation:
         return res
         
     def create_models(self, verbose=True):
+        """
+        Creates and trains the four models: empirical model, logistic regression, occupancy-detection, Maxent.
+        """
+        
         lr_models = [4*[None], 4*[None]]
         em_models = [4*[None], 4*[None]]
         od_models = [4*[None], 4*[None]]
@@ -99,7 +144,7 @@ class Simulation:
             for j in range(4):
                 if (i, j) in self.scenarios:
                     if verbose:
-                        print("Scenario", i, j)
+                        print("Scenario", Simulation.LABELS[i][j])
                     occupancy_label = self.Z_train[i, j]
                     y = self.Y_train[i, j]
                     y_K = self.Y_K_train[i, j]
@@ -132,6 +177,7 @@ class Simulation:
                         maxent_model.fit()
                         maxent_family.append(maxent_model)
 
+                    # Model selection
                     lr_ids[i][j] = Simulation.get_best_model(lr_family)[0]
                     lr_models[i][j] = lr_family
 
@@ -143,12 +189,6 @@ class Simulation:
 
                     maxent_ids[i][j] = Simulation.get_best_model(maxent_family)[0]
                     maxent_models[i][j] = maxent_family
-
-                    if verbose:
-                        print("LR id: ", lr_ids[i][j])
-                        print("EM id: ", em_ids[i][j])
-                        print("OD id: ", od_ids[i][j])
-                        print("Maxent id: ", maxent_ids[i][j])
                     
         self.lr_models = lr_models
         self.em_models = em_models
@@ -158,7 +198,8 @@ class Simulation:
         self.em_ids = em_ids
         self.od_ids = od_ids
         self.maxent_ids = maxent_ids
-                
+        
+    @staticmethod
     def get_best_model(family):
         """
         Returns the model with the lowest Akaike information criterion (AIC)
@@ -170,6 +211,10 @@ class Simulation:
         return id_, family[id_]
     
     def get_best_models(self):
+        """
+        Performs model selection in the respective families of the four models under study.
+        """
+        
         lr = [4*[None], 4*[None]]
         od = [4*[None], 4*[None]]
         em = [4*[None], 4*[None]]
@@ -217,3 +262,64 @@ class Simulation:
                     maxent[i][j] = maxent_model
                 
         return np.array(lr), np.array(od), np.array(em), np.array(maxent)
+    
+    @staticmethod
+    def range_results(n_trains=[100, 400, 1000, 2000], n_simul=2, scenarios=SCENARIOS, verbose=True):
+        """
+        Creates and runs n_simul simulations for every n_train value provided in n_trains.
+        Returns RMSE, AUC and Spearman's rank correlation coefficients for all simulations.
+        """
+        
+        lr_rmse = np.zeros((2, 4, len(n_trains), n_simul))
+        od_rmse = np.zeros((2, 4, len(n_trains), n_simul))
+        em_rmse = np.zeros((2, 4, len(n_trains), n_simul))
+        maxent_rmse = np.zeros((2, 4, len(n_trains), n_simul))
+
+        lr_auc = np.zeros((2, 4, len(n_trains), n_simul))
+        od_auc = np.zeros((2, 4, len(n_trains), n_simul))
+        em_auc = np.zeros((2, 4, len(n_trains), n_simul))
+        maxent_auc = np.zeros((2, 4, len(n_trains), n_simul))
+
+        lr_spearman = np.zeros((2, 4, len(n_trains), n_simul))
+        od_spearman = np.zeros((2, 4, len(n_trains), n_simul))
+        em_spearman = np.zeros((2, 4, len(n_trains), n_simul))
+        maxent_spearman = np.zeros((2, 4, len(n_trains), n_simul))
+
+        for i, n_train in enumerate(n_trains):
+            for j in range(n_simul):
+                
+                if verbose:
+                    print("New batch", j, i)
+                    
+                simul = Simulation(n_train=n_train, min_size=1, scenarios=scenarios)
+                simul.create_models(verbose=False)
+
+                lr_models, od_models, em_models, maxent_models = simul.get_best_models()
+                for k in range(2):
+                    for l in range(4):
+                        if (k, l) in simul.scenarios:
+                            od_model = od_models[k][l]
+                            lr_model = lr_models[k][l]
+                            em_model = em_models[k][l]
+                            maxent_model = maxent_models[k][l]
+
+                            lr_rmse[k, l, i, j] = lr_model.rmse
+                            od_rmse[k, l, i, j] = od_model.rmse
+                            em_rmse[k, l, i, j] = em_model.rmse
+                            maxent_rmse[k, l, i, j] = maxent_model.rmse
+
+                            lr_auc[k, l, i, j] = lr_model.auc
+                            od_auc[k, l, i, j] = od_model.auc
+                            em_auc[k, l, i, j] = em_model.auc
+                            maxent_auc[k, l, i, j] = maxent_model.auc
+
+                            lr_spearman[k, l, i, j] = lr_model.spearman
+                            od_spearman[k, l, i, j] = od_model.spearman
+                            em_spearman[k, l, i, j] = em_model.spearman
+                            maxent_spearman[k, l, i, j] = maxent_model.spearman
+
+        rmse = [lr_rmse, od_rmse, em_rmse, maxent_rmse]
+        auc = [lr_auc, od_auc, em_auc, maxent_auc]
+        spearman = [lr_spearman, od_spearman, em_spearman, maxent_spearman]
+
+        return rmse, auc, spearman
