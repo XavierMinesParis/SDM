@@ -76,6 +76,14 @@ class Species:
         self.y_train = y_train
         self.models = dict()
         
+        distributions = dict()
+        for column in stations.climate_variables:
+            variable = presence[column].values
+            counts, bin_edges = np.histogram(variable, bins=np.unique(variable), density=True)
+            counts /= np.sum(counts)
+            distributions[column] = (counts, bin_edges)
+        self.distributions = distributions
+        
     def add_model(self, name, model):
         """
         Adds a trained model to the models attribute.
@@ -84,19 +92,25 @@ class Species:
         model.fit(self.x_train, self.y_train)
         self.models[name] = model
         
-    def test_models(self, locations_file_name=None, climate_folder=None):
+    def test_models(self, locations_file_name=None, climate_folder=None, save=False):
         """
         Returns a dictionary where keys are names of models and values are predictions.
         """
         
         extractor = Extractor(locations_file_name, climate_folder)
-        climate_data = extractor.extract(verbose=False)[CLIMATE_VARIABLES]
+        climate_data = extractor.extract(verbose=False)[self.stations.climate_variables]
         x_test = climate_data.values
         
         res = dict()
         
         for name, model in self.models.items():
             res[name] = model.predict(x_test)
+            
+        if save: # Building a pandas dataframe and saving it as csv.
+            results = locations.copy()
+            for name, model in self.models.items():
+                results[name] = res[name]
+            results.to_csv('Data/' + file_name[:-4] + '_results', index=False)
             
         return res
         

@@ -4,8 +4,8 @@ from empirical_model import *
 
 class Stations:
     
-    def __init__(self, file_name, id_name, ids=None, locations=None, 
-                 data=None, distributions=None, ubiquist_proximities=None):
+    def __init__(self, file_name, id_name, ids=None, climate_variables=CLIMATE_VARIABLES, 
+                 locations=None, data=None, distributions=None, ubiquist_proximities=None):
         """
         A Stations object designed for ecological applications.
         
@@ -13,6 +13,7 @@ class Stations:
         file_name (str): Source file of stations.
         id_name (str): Column for stations ids.
         ids (pd.Series): Ids of the stations.
+        climate_variables (list): Columns of climate variables.
         locations (pd.Dataframe): Longitude and latitude of the stations.
         data (pd.Dataframe): Climate data.
         distributions (dict): Keys are names of climate variables and values are tuple of size 2.
@@ -26,12 +27,13 @@ class Stations:
         df = pd.read_csv('Data/' + file_name, sep=",", on_bad_lines='skip')
         self.locations = df[['lon', 'lat']]
         self.ids = df[id_name]
-        self.climate_data = df[CLIMATE_VARIABLES]
+        self.climate_variables = climate_variables
+        self.climate_data = df[climate_variables]
         
         distributions = dict()
         ubiquist_proximities = dict()
     
-        for column in CLIMATE_VARIABLES:
+        for column in climate_variables:
             variable = df[column].values
             counts, bin_edges = np.histogram(variable, bins=np.unique(variable), density=True)
             counts /= np.sum(counts)

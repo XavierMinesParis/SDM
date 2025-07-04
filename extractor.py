@@ -22,7 +22,7 @@ class Extractor:
         self.climate_folder = climate_folder
         self.id_stations_name = id_stations_name
         
-    def extract(self, verbose=True):
+    def extract(self, climate_variables=CLIMATE_VARIABLES, verbose=True):
         """
         Creates and returns the extracted_data dataframe.
         """
@@ -49,7 +49,7 @@ class Extractor:
             with rasterio.open(tif_file) as src:
                 var_name = os.path.splitext(os.path.basename(tif_file))[0]
                 
-                if var_name in CLIMATE_VARIABLES: # Considering valid tif files
+                if var_name in climate_variables: # Considering valid tif files
                     scale = src.scales[0] if src.scales else 1.0 # Sometimes, temperature data is multiplied by 100
                     offset = src.offsets[0] if src.offsets else 0.0
                     values = [val[0] * scale + offset for val in src.sample(coordinates)]
@@ -73,12 +73,14 @@ class Extractor:
         """
         Exports climate data as a csv file.
         """
+        
         extracted_data.to_csv('Data/' + output_file, index=False)
     
     def filter_france(df):
         """
         Outdated
         """
+        
         geometry = [Point(xy) for xy in zip(df['lon'], df['lat'])]
         gdf_points = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
         gdf_france = gpd.read_file("Data/france_contour/France.shp")
