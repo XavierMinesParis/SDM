@@ -1,7 +1,7 @@
 # Species Distribution Models
 
 This project is part of a four-month research internship conducted at the French engineering school Mines Paris - PSL.
-It aims to present general properties of standard Species Distribution Models (SDMs) through simulations and to provide object_oriented tools for ecological applications of SDMs.
+It aims to present general properties of standard Species Distribution Models (SDMs) through simulations, and to provide object-oriented tools for ecological applications of SDMs.
 
 ## Installation
 
@@ -11,7 +11,7 @@ git clone https:https://github.com/XavierMinesParis/SDM.git
 cd SDM
 ```
 
-2️⃣ **(Recommended) Create and activate a virtual environment**:
+2️⃣ **Create and activate a virtual environment**:
 ```bash
 python -m venv env_sdm
 ```
@@ -47,7 +47,7 @@ You can run functions from your terminal or use the two example notebooks availa
 ```
 SDM/
 │
-├── report/                     # Internship report
+├── report.pdf                  # Internship report
 ├── Data/                       # Folder for datasets
 ├── Figures/                    # Folder for plots
 ├── logistic_regression.py      # Classical logistic regression
@@ -69,7 +69,7 @@ SDM/
 
 ## Code structure
 
-<img src="Figures/code.jpg" alt="description" width="400">
+You can find a description of code architecture here: <img src="Figures/code.jpg" alt="description" width="400">.
 
 ## Contributing
 
@@ -77,4 +77,4 @@ Pull requests are welcome. Please open an issue first to discuss what you would 
 
 ## License
 
-This project is licensed under the MIT License, see the LICENSE.txt file for details.
+This project is licensed under the MIT License. See the LICENSE.txt file for details.
