@@ -69,7 +69,8 @@ SDM/
 
 ## Code structure
 
-You can find a description of code architecture here: <img src="Figures/code.jpg" alt="description" width="400">.
+You can find a description of code architecture here:
+<img src="Figures/code.jpg" alt="description" width="400">
 
 ## Contributing
 

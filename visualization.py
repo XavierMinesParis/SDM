@@ -6,14 +6,15 @@ plt.rcParams['figure.figsize'] = (15, 5)
 from stations import *
 from constants import *
 from sklearn.metrics import roc_curve, auc
+from matplotlib.colors import TwoSlopeNorm
 
 class Visualization:
     """
-    Displays information about species and its relationships with climatic variables: the distributions,
+    Displays information about species and its relationships with climate variables: the distributions,
     the concentrations, the climatic optimums, etc.
     """
     
-    def plot_relationships(simulation):
+    def plot_relationships(simulation, save=False):
         s = simulation
         plt.rcParams['figure.figsize'] = (15, 8)
         fig, axs = plt.subplots(4, 2)
@@ -32,9 +33,12 @@ class Visualization:
 
         fig.tight_layout()
         plt.legend()
+        
+        if save:
+            plt.savefig('Figures/relationships.png', bbox_inches='tight')
         plt.show()
         
-    def plot_best_models(simulation, i, j):
+    def plot_best_models(simulation, i, j, save=False):
         s = simulation
         lr_models, od_models, em_models, maxent_models = s.get_best_models()
         od_model = od_models[i][j]
@@ -90,113 +94,272 @@ class Visualization:
         axs[1, 2].set_axis_off()
         axs[1, 3].set_axis_off()
         axs[1, 4].set_axis_off()
-
-        plt.show()
-    
-    def plot_area(species):
-        grid = pd.read_csv('Grid/final.csv', sep=",")
-        plt.rcParams['figure.figsize'] = (10, 7)
-        plt.scatter(grid['lon'], grid['lat'], c='beige', s=1)
-        for s in species:
-            plt.scatter(s.locations['lon'], s.locations['lat'], s=1, label=s.latin_name)
-        plt.ylim(41, 52)
-        plt.xlim(-5, 10)
-        plt.legend()
+        
+        if save:
+            plt.savefig('Figures/simulations_best_models.png', bbox_inches='tight')
         plt.show()
         
-    def plot_prediction_maps(species):
+    def plot_range_simulations(n_trains, res, i, j, save=False):
+        
+        rmse, auc, spearman = res
+        
+        lr_rmse, od_rmse, em_rmse, maxent_rmse = rmse
+        lr_auc, od_auc, em_auc, maxent_auc = auc
+        lr_spearman, od_spearman, em_spearman, maxent_spearman = spearman
+        
+        lr_rmse, od_rmse, em_rmse, maxent_rmse = lr_rmse[i, j], od_rmse[i, j], em_rmse[i, j], maxent_rmse[i, j]
+        lr_auc, od_auc, em_auc, maxent_auc = lr_auc[i, j], od_auc[i, j], em_auc[i, j], maxent_auc[i, j]
+        lr_spearman, od_spearman = lr_spearman[i, j], od_spearman[i, j]
+        em_spearman, maxent_spearman = em_spearman[i, j], maxent_spearman[i, j]
+        
+        fig, axs = plt.subplots(1, 3)
+
+        plt.xlim(0, 2100)
+
+        axs[0].plot(n_trains, np.median(lr_rmse, axis=1), label='Logistic Regression')
+        axs[0].plot(n_trains, np.median(od_rmse, axis=1), label='Occupancy Detection Model')
+        axs[0].plot(n_trains, np.median(em_rmse, axis=1), label='Empirical Model')
+        axs[0].plot(n_trains, np.median(maxent_rmse, axis=1), label='Maxent')
+        box = axs[0].boxplot(lr_rmse.transpose(), positions=n_trains,
+                             patch_artist=True, widths=80, showfliers=False)
+        for element in ['boxes', 'whiskers', 'caps', 'medians']:
+            for item in box[element]:
+                item.set_color('blue')
+        for patch in box['boxes']:
+            patch.set_facecolor('blue')
+            patch.set_alpha(0.2)
+        box = axs[0].boxplot(od_rmse.transpose(), positions=n_trains,
+                             patch_artist=True, widths=80, showfliers=False)
+        for element in ['boxes', 'whiskers', 'caps', 'medians']:
+            for item in box[element]:
+                item.set_color('orange')
+        for patch in box['boxes']:
+            patch.set_facecolor('orange')
+            patch.set_alpha(0.2)
+        box = axs[0].boxplot(em_rmse.transpose(), positions=n_trains,
+                             patch_artist=True, widths=80, showfliers=False)
+        for element in ['boxes', 'whiskers', 'caps', 'medians']:
+            for item in box[element]:
+                item.set_color('green')
+        for patch in box['boxes']:
+            patch.set_facecolor('green')
+            patch.set_alpha(0.2)
+        box = axs[0].boxplot(maxent_rmse.transpose(), positions=n_trains,
+                             patch_artist=True, widths=80, showfliers=False)
+        for element in ['boxes', 'whiskers', 'caps', 'medians']:
+            for item in box[element]:
+                item.set_color('red')
+        for patch in box['boxes']:
+            patch.set_facecolor('red')
+            patch.set_alpha(0.2)
+        axs[0].set_title('RMSE')
+        axs[0].legend()
+
+        axs[1].plot(n_trains, np.median(lr_auc, axis=1), label='Logistic Regression')
+        axs[1].plot(n_trains, np.median(od_auc, axis=1), label='Occupancy Detection Model')
+        axs[1].plot(n_trains, np.median(em_auc, axis=1), label='Empirical Model')
+        axs[1].plot(n_trains, np.median(maxent_auc, axis=1), label='Maxent')
+        box = axs[1].boxplot(lr_auc.transpose(), positions=n_trains,
+                             patch_artist=True, widths=80, showfliers=False)
+        for element in ['boxes', 'whiskers', 'caps', 'medians']:
+            for item in box[element]:
+                item.set_color('blue')
+        for patch in box['boxes']:
+            patch.set_facecolor('blue')
+            patch.set_alpha(0.2)
+        box = axs[1].boxplot(od_auc.transpose(), positions=n_trains,
+                             patch_artist=True, widths=80, showfliers=False)
+        for element in ['boxes', 'whiskers', 'caps', 'medians']:
+            for item in box[element]:
+                item.set_color('orange')
+        for patch in box['boxes']:
+            patch.set_facecolor('orange')
+            patch.set_alpha(0.2)
+        box = axs[1].boxplot(em_auc.transpose(), positions=n_trains,
+                             patch_artist=True, widths=80, showfliers=False)
+        for element in ['boxes', 'whiskers', 'caps', 'medians']:
+            for item in box[element]:
+                item.set_color('green')
+        for patch in box['boxes']:
+            patch.set_facecolor('green')
+            patch.set_alpha(0.2)
+        box = axs[1].boxplot(maxent_auc.transpose(), positions=n_trains,
+                             patch_artist=True, widths=80, showfliers=False)
+        for element in ['boxes', 'whiskers', 'caps', 'medians']:
+            for item in box[element]:
+                item.set_color('red')
+        for patch in box['boxes']:
+            patch.set_facecolor('red')
+            patch.set_alpha(0.2)
+        axs[1].set_title('AUC')
+
+        axs[2].plot(n_trains, np.median(lr_spearman, axis=1), label='Logistic Regression')
+        axs[2].plot(n_trains, np.median(od_spearman, axis=1), label='Occupancy Detection Model')
+        axs[2].plot(n_trains, np.median(em_spearman, axis=1), label='Empirical Model')
+        axs[2].plot(n_trains, np.median(maxent_spearman, axis=1), label='Maxent')
+        box = axs[2].boxplot(lr_spearman.transpose(), positions=n_trains,
+                             patch_artist=True, widths=80, showfliers=False)
+        for element in ['boxes', 'whiskers', 'caps', 'medians']:
+            for item in box[element]:
+                item.set_color('blue')
+        for patch in box['boxes']:
+            patch.set_facecolor('blue')
+            patch.set_alpha(0.2)
+        box = axs[2].boxplot(od_spearman.transpose(), positions=n_trains,
+                             patch_artist=True, widths=80, showfliers=False)
+        for element in ['boxes', 'whiskers', 'caps', 'medians']:
+            for item in box[element]:
+                item.set_color('orange')
+        for patch in box['boxes']:
+            patch.set_facecolor('orange')
+            patch.set_alpha(0.2)
+        box = axs[2].boxplot(em_spearman.transpose(), positions=n_trains,
+                             patch_artist=True, widths=80, showfliers=False)
+        for element in ['boxes', 'whiskers', 'caps', 'medians']:
+            for item in box[element]:
+                item.set_color('green')
+        for patch in box['boxes']:
+            patch.set_facecolor('green')
+            patch.set_alpha(0.2)
+        box = axs[2].boxplot(maxent_spearman.transpose(), positions=n_trains,
+                             patch_artist=True, widths=80, showfliers=False)
+        for element in ['boxes', 'whiskers', 'caps', 'medians']:
+            for item in box[element]:
+                item.set_color('red')
+        for patch in box['boxes']:
+            patch.set_facecolor('red')
+            patch.set_alpha(0.2)
+        axs[2].set_title('Spearman')
+
+        if save:
+            plt.savefig('Figures/simulations_rmse_auc_spearman.png', bbox_inches='tight')
+        plt.show()
+        
+    def plot_prediction_maps(species, save=False):
+        
+        climate_variables = species.stations.climate_variables
         
         stations = Stations("stations_climate_current.csv", id_name='id')
-        
-        current_grid = pd.read_csv('Data/grid_reduced_current.csv')
-        x_current = current_grid[CLIMATE_VARIABLES]
-        lr_current = species.lr_model.predict(x_current)
-        em_current = species.em_model.predict(x_current)
-        ssp245_grid = pd.read_csv('Data/grid_reduced_ssp245.csv')
-        x_ssp245 = ssp245_grid[CLIMATE_VARIABLES]
-        lr_ssp245 = species.lr_model.predict(x_ssp245)
-        em_ssp245 = species.em_model.predict(x_ssp245)
-        ssp585_grid = pd.read_csv('Data/grid_reduced_ssp585.csv')
-        x_ssp585 = ssp585_grid[CLIMATE_VARIABLES]
-        lr_ssp585 = species.lr_model.predict(x_ssp585)
-        em_ssp585 = species.em_model.predict(x_ssp585)
-        
         x_train, y_train = species.x_train, species.y_train
+        
+        current_grid = pd.read_csv('Data/grid_reduced_current.csv').copy()
+        x_current = current_grid[climate_variables]
+        ssp245_grid = pd.read_csv('Data/grid_reduced_ssp245.csv').copy()
+        x_ssp245 = ssp245_grid[climate_variables]
+        ssp585_grid = pd.read_csv('Data/grid_reduced_ssp585.csv').copy()
+        x_ssp585 = ssp585_grid[climate_variables]
+        
+        models = species.models
+        n = len(models)
+        
+        current_columns, ssp245_columns, ssp585_columns = list(), list(), list()
+        for name, model in models.items():
+            current_grid[name + "_current"] = model.predict(x_current)
+            ssp245_grid[name + "_ssp245"] = model.predict(x_ssp245)
+            ssp585_grid[name + "_ssp585"] = model.predict(x_ssp585)
+            current_columns.append(name + "_current")
+            ssp245_columns.append(name + "_ssp245")
+            ssp585_columns.append(name + "_ssp585")
+            
+        common_keys = pd.merge(current_grid[['lon', 'lat']], ssp245_grid[['lon', 'lat']],
+                               on=['lon', 'lat'], how='inner')
+        df1 = pd.merge(current_grid, common_keys, on=['lon', 'lat'], how='inner')[['lon', 'lat'] + current_columns]
+        df2 = pd.merge(ssp245_grid, common_keys, on=['lon', 'lat'], how='inner')[['lon', 'lat'] + ssp245_columns]
+        df3 = pd.merge(ssp585_grid, common_keys, on=['lon', 'lat'], how='inner')[['lon', 'lat'] + ssp585_columns]
+        df4 = pd.merge(df1, df2, on=['lon', 'lat'], how='inner')
+        df = pd.merge(df3, df4, on=['lon', 'lat'], how='inner')
 
-        plt.rcParams['figure.figsize'] = (16, 8)
-        fig, axs = plt.subplots(2, 4, squeeze=False)
+        plt.rcParams['figure.figsize'] = (16, 10 * n)
+        fig, axs = plt.subplots(2 * n, 3, squeeze=False)
+        norm = TwoSlopeNorm(vcenter=0, vmin=-0.3, vmax=0.3)
+        
+        for i, item in enumerate(models.items()):
+            
+            name, model = item
 
-        # Plot Presence and Absence points
-        axs[0, 0].scatter(stations.locations['lon'], stations.locations['lat'], c='gray',
-                          cmap='viridis', s=1, alpha=0.07, label="Absence points")
-        axs[0, 0].scatter(species.locations['lon'], species.locations['lat'], c="lime",
-                          s=1, alpha=0.5, label="Presence points")
-        axs[0, 0].set_title(species.latin_name + ' - Sampling Points')
-        axs[0, 0].set_xlim(-5, 10)
-        axs[0, 0].set_ylim(41, 52)
-        
-        axs[1, 0].scatter(stations.locations['lon'], stations.locations['lat'], c='gray',
-                          cmap='viridis', s=1, alpha=0.07, label="Absence points")
-        axs[1, 0].scatter(species.locations['lon'], species.locations['lat'], c="lime",
-                          s=1, alpha=0.5, label="Presence points")
-        axs[1, 0].set_title(species.latin_name + ' - Sampling Points')
-        axs[1, 0].set_xlim(-5, 10)
-        axs[1, 0].set_ylim(41, 52)
+            # Plot Presence and Absence points
+            axs[2 * i + 1, 0].scatter(stations.locations['lon'], stations.locations['lat'], c='gray',
+                              cmap='viridis', s=1, alpha=0.07, label="Absence points")
+            axs[2 * i + 1, 0].scatter(species.locations['lon'], species.locations['lat'], c="lime",
+                              s=1, alpha=0.5, label="Presence points")
+            axs[2 * i + 1, 0].set_title(species.latin_name + ' - Sampling Points')
+            axs[2 * i + 1, 0].set_xlim(-5, 10)
+            axs[2 * i + 1, 0].set_ylim(41, 52)
 
-        # Plot Logistic Regression
-        axs[0, 1].scatter(current_grid['lon'], current_grid['lat'], c=lr_current, cmap='viridis', s=8)
-        axs[0, 1].set_title('LR Current \n' + "LR training AUC: " + str(species.lr_model.get_auc(x_train, y_train))[: 4])
-        axs[0, 1].set_xlim(-5, 10)
-        axs[0, 1].set_ylim(41, 52)
-        
-        axs[0, 2].scatter(ssp245_grid['lon'], ssp245_grid['lat'], c=lr_ssp245, cmap='viridis', s=8)
-        axs[0, 2].set_title('LR SSP245')
-        axs[0, 2].set_xlim(-5, 10)
-        axs[0, 2].set_ylim(41, 52)
-        
-        axs[0, 3].scatter(ssp585_grid['lon'], ssp585_grid['lat'], c=lr_ssp585, cmap='viridis', s=8)
-        axs[0, 3].set_title('LR SSP585')
-        axs[0, 3].set_xlim(-5, 10)
-        axs[0, 3].set_ylim(41, 52)
+            # Plot max and min values on all predictions
+            vmax = max(max(np.max(df[name + '_current'].values), np.max(df[name + '_ssp245'].values)),
+                       np.max(df[name + '_ssp585'].values))
+            vmin = min(min(np.min(df[name + '_current'].values), np.min(df[name + '_ssp245'].values)),
+                       np.min(df[name + '_ssp585'].values))
+            
+            scatter = axs[2 * i, 0].scatter(df['lon'], df['lat'], c=df[name + '_current'], cmap='viridis', s=8,
+                                           vmin=vmin, vmax=vmax)
+            axs[2 * i, 0].set_title(name + ' Current \n' + "Training AUC: " + str(model.get_auc(x_train, y_train))[: 4])
+            axs[2 * i, 0].set_xlim(-5, 10)
+            axs[2 * i, 0].set_ylim(41, 52)
+            fig.colorbar(scatter, ax=axs[2 * i, 0], pad=0)
+            
+            scatter = axs[2 * i, 1].scatter(df['lon'], df['lat'], c=df[name + '_ssp245'], cmap='viridis', s=8,
+                                           vmin=vmin, vmax=vmax)
+            axs[2 * i, 1].set_title(name + ' SSP245')
+            axs[2 * i, 1].set_xlim(-5, 10)
+            axs[2 * i, 1].set_ylim(41, 52)
+            fig.colorbar(scatter, ax=axs[2 * i, 1], pad=0)
 
-        # Plot Empirical Model
-        axs[1, 1].scatter(current_grid['lon'], current_grid['lat'], c=em_current, cmap='viridis', s=8)
-        axs[1, 1].set_title('EM Current \n' + "EM training AUC: " + str(species.em_model.get_auc(x_train, y_train))[: 4])
-        axs[1, 1].set_xlim(-5, 10)
-        axs[0, 1].set_ylim(41, 52)
-        
-        axs[1, 2].scatter(ssp245_grid['lon'], ssp245_grid['lat'], c=em_ssp245, cmap='viridis', s=8)
-        axs[1, 2].set_title('EM SSP245')
-        axs[1, 2].set_xlim(-5, 10)
-        axs[1, 2].set_ylim(41, 52)
-        
-        axs[1, 3].scatter(ssp585_grid['lon'], ssp585_grid['lat'], c=em_ssp585, cmap='viridis', s=8)
-        axs[1, 3].set_title('EM SSP585')
-        axs[1, 3].set_xlim(-5, 10)
-        axs[1, 3].set_ylim(41, 52)
+            scatter = axs[2 * i, 2].scatter(df['lon'], df['lat'], c=df[name + '_ssp585'], cmap='viridis', s=8,
+                                           vmin=vmin, vmax=vmax)
+            axs[2 * i, 2].set_title(name + ' SSP585')
+            axs[2 * i, 2].set_xlim(-5, 10)
+            axs[2 * i, 2].set_ylim(41, 52)
+            fig.colorbar(scatter, ax=axs[2 * i, 2], pad=0)
+
+            scatter = axs[2 * i + 1, 1].scatter(df['lon'], df['lat'], c=df[name + '_ssp245'] - df[name + '_current'],
+                                        cmap='seismic_r', s=8, norm=norm)
+            axs[2 * i + 1, 1].set_title(name + ' SSP245 Trend')
+            axs[2 * i + 1, 1].set_xlim(-5, 10)
+            axs[2 * i + 1, 1].set_ylim(41, 52)
+            fig.colorbar(scatter, ax=axs[2 * i + 1, 1], pad=0)
+
+            scatter = axs[2 * i + 1, 2].scatter(df['lon'], df['lat'], c=df[name + '_ssp585'] - df[name + '_current'],
+                                        cmap='seismic_r', s=8, norm=norm)
+            axs[2 * i + 1, 2].set_title(name + ' SSP585 Trend')
+            axs[2 * i + 1, 2].set_xlim(-5, 10)
+            axs[2 * i + 1, 2].set_ylim(41, 52)
+            fig.colorbar(scatter, ax=axs[2 * i + 1, 2], pad=0)
 
         plt.tight_layout()
-        plt.show()
+        if save:
+            fig.savefig('Figures/' + str(species.id_) + '.png')
+        else:
+            plt.show()
 
-    
-    def plot_hist(species, column):
+    def plot_hist(species, column, save=False):
+        
+        plt.rcParams['figure.figsize'] = (15, 5)
         
         if not isinstance(species, list):
             species = [species]
         
-        counts, bin_edges = Stations.distributions[column]
-        plt.bar(x=bin_edges[:-1], height=counts, width=np.diff(bin_edges),
-                align='edge', alpha=0.5, color='grey', label='Ubiquist species')
+        ubi_counts, bin_edges = species[0].stations.distributions[column]
+        plt.bar(x=bin_edges[:-1], height=ubi_counts, width=np.diff(bin_edges),
+                align='edge', alpha=0.5, color='grey', label='Ubiquist species - Background data')
+        
         for s in species:
-            variable = s.variables[column]
-            plt.bar(x=bin_edges[:-1], height=variable.counts, width=np.diff(bin_edges),
+            counts, bin_edges = s.distributions[column]
+            plt.bar(x=bin_edges[:-1], height=counts, width=np.diff(bin_edges),
                     align='edge', alpha=0.5, label=s.latin_name)
-            plt.axvline(bin_edges[variable.optimum_range])
+            
         plt.legend()
-        plt.title("Distribution by " + Stations.dict_variables[column])
+        plt.title("Distribution by " + column)
+        
+        if save:
+            plt.savefig('/Figures/hist' + column + '_' + '.png', bbox_inches='tight')
         plt.show()
         
-    def plot_summary(species):
+    def plot_em_summary(species):
+        """
+        Outdated.
+        """
         
         if not isinstance(species, list):
             species = [species]
@@ -241,3 +404,6 @@ class Visualization:
         fig.legend(lines, labels, loc='upper left', ncol=1)
         plt.show()
     
+# -
+
+

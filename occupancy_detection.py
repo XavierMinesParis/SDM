@@ -69,12 +69,14 @@ class OccupancyDetection(GenericLikelihoodModel):
         return psi, p
     
     def get_aic(self):
+        
         return GenericLikelihoodModelResults(self, self.res).aic
     
     def get_auc(self, x_test, y_test):
         """
         Computes the AUC discrimination value, with y_test belonging to {0, 1}.
         """
+        
         y_pred = OccupancyDetection.predict(self, x_test)[0]
         fpr, tpr, thresholds = roc_curve(y_test, y_pred, pos_label=1)
         self.auc = auc(fpr, tpr)
@@ -84,16 +86,20 @@ class OccupancyDetection(GenericLikelihoodModel):
         """
         Computes the Root Mean Squared Error value, with y_test belonging to [0, 1].
         """
+        
         y_pred = OccupancyDetection.predict(self, x_test)[0]
         self.rmse = mean_squared_error(y_test, y_pred , squared=False)
+        
         return self.rmse
     
     def get_spearman(self, x_test, y_test):
         """
         Computes the Spearman's rank correlation coefficient, with y_test belonging to [0, 1]
         """
+        
         y_pred = OccupancyDetection.predict(self, x_test)[0]
         self.spearman = spearmanr(y_test, y_pred)[0]
+        
         return self.spearman
     
     def __repr__(self):

@@ -98,21 +98,18 @@ class Species:
         """
         
         extractor = Extractor(locations_file_name, climate_folder)
-        climate_data = extractor.extract(verbose=False)[self.stations.climate_variables]
+        df = extractor.extract(verbose=False)
+        climate_data = df[self.stations.climate_variables]
         x_test = climate_data.values
-        
-        res = dict()
-        
+            
+        results = df[['lon', 'lat']].copy()
         for name, model in self.models.items():
-            res[name] = model.predict(x_test)
+            results[name] = model.predict(x_test)
             
-        if save: # Building a pandas dataframe and saving it as csv.
-            results = locations.copy()
-            for name, model in self.models.items():
-                results[name] = res[name]
-            results.to_csv('Data/' + file_name[:-4] + '_results', index=False)
+        if save: # Saving as csv.
+            results.to_csv('Data/' + locations_file_name[:-4] + '_' + str(self.id_) + '_results.csv', index=False)
             
-        return res
+        return results
         
     def __repr__(self):
         

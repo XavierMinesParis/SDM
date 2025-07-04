@@ -4,7 +4,7 @@ from empirical_model import *
 
 class Stations:
     
-    def __init__(self, file_name, id_name, ids=None, climate_variables=CLIMATE_VARIABLES, 
+    def __init__(self, file_name, id_name='id', ids=None, climate_variables=CLIMATE_VARIABLES, 
                  locations=None, data=None, distributions=None, ubiquist_proximities=None):
         """
         A Stations object designed for ecological applications.
