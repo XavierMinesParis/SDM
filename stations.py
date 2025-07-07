@@ -3,11 +3,15 @@ from constants import *
 from empirical_model import *
 
 class Stations:
+    """
+    A Stations object designed for ecological applications.
+    It stores climate data and proximity values used for the empirical model.
+    """
     
     def __init__(self, file_name, id_name='id', ids=None, climate_variables=CLIMATE_VARIABLES, 
                  locations=None, data=None, distributions=None, ubiquist_proximities=None):
         """
-        A Stations object designed for ecological applications.
+        Extracts climate data and computes proximity values, that is ubiquist proximities. 
         
         Attributes:
         file_name (str): Source file of stations.

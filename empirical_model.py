@@ -7,11 +7,15 @@ import warnings
 warnings.filterwarnings("ignore")
 
 class EmpiricalModel:
+    """
+    This model is inspired from a method developed in the 80's by French botanists and well-described in a book (Garbolino, 2014).
+    It is based solely on conditional counting on histograms, hence the 'empirical' adjective.
+    """
     
     def __init__(self, bin_edges=None, proximities=None, concentrations=None, optimum_range=None,
-                optimum_value=None, indicator_power=None):
+                optimum_value=None, indicator_power=None, x=None, y=None):
         """
-        This model 
+        Initiates the model, with no computation.
 
         Attributes :
         bin_edges (list): Its ith element is a list of bins for the histogram of the ith climate variable.
@@ -33,10 +37,14 @@ class EmpiricalModel:
         self.optimum_range = optimum_range
         self.optimum_value = optimum_value
         self.indicator_power = indicator_power
-        self.x, self.y = None, None
+        self.x, self.y = x, y
         self.auc, self.rmse, self.spearman = None, None, None
     
     def fit(self, x, y=None, stations=None, bins=100, verbose=False):
+        """
+        Trains the model. If stations is set to None, the ubiquist proximities (ie. proximities of the background data) are computed.
+        If not, proximities are directly extracted from the stations object.
+        """
 
         self.x, self.y = x, y
         m = x.shape[1]
@@ -59,7 +67,7 @@ class EmpiricalModel:
                 p /= np.sum(p)
                 ubiquist_proximities = EmpiricalModel.get_proximities(bin_edges, p, p)
             else: # Real case studies
-                column = CLIMATE_VARIABLES[i]
+                column = stations.climate_variables[i]
                 p, bins = stations.distributions[column]
                 ubiquist_proximities = stations.ubiquist_proximities[column]
                 
