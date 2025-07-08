@@ -1,6 +1,6 @@
 # +
-from constants import *
-from extractor import *
+import numpy as np
+import pandas as pd
 from sklearn.metrics import roc_curve, auc, mean_squared_error
 from scipy.stats import spearmanr
 import warnings
@@ -134,6 +134,7 @@ class EmpiricalModel:
         
         y_pred = self.predict(self.x)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred))
+        
         return mean_squared_error(self.y, y_pred , squared=False)
     
     def get_auc(self, x_test, y_test):
@@ -145,6 +146,7 @@ class EmpiricalModel:
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
         fpr, tpr, thresholds = roc_curve(y_test, y_pred, pos_label=1)
         self.auc = auc(fpr, tpr)
+        
         return self.auc
     
     def get_rmse(self, x_test, y_test):
@@ -155,6 +157,7 @@ class EmpiricalModel:
         y_pred = EmpiricalModel.predict(self, x_test)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
         self.rmse = mean_squared_error(y_test, y_pred , squared=False)
+        
         return self.rmse
     
     def get_spearman(self, x_test, y_test):
@@ -165,6 +168,7 @@ class EmpiricalModel:
         y_pred = EmpiricalModel.predict(self, x_test)
         y_pred = (y_pred - np.min(y_pred)) / (np.max(y_pred) - np.min(y_pred)) # Min max normalization
         self.spearman = spearmanr(y_test, y_pred)[0]
+        
         return self.spearman
     
     def __repr__(self):

@@ -236,10 +236,9 @@ class Visualization:
         plt.show()
         
     def plot_prediction_maps(species, save=False):
-        
-        climate_variables = species.stations.climate_variables
-        
-        stations = Stations("stations_climate_current.csv", id_name='id')
+
+        stations = species.stations
+        climate_variables = stations.climate_variables
         x_train, y_train = species.x_train, species.y_train
         
         current_grid = pd.read_csv('Data/grid_reduced_current.csv').copy()
