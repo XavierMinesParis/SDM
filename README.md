@@ -26,6 +26,11 @@ On Windows:
 env_sdm\Scripts\activate
 ```
 
+On Windows using Git Bash:
+```bash
+source env_sdm/Scripts/activate
+```
+
 3️⃣ **Install dependencies**:
 ```bash
 pip install -r requirements.txt
