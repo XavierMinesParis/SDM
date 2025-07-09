@@ -7,7 +7,7 @@ It aims to present general properties of standard Species Distribution Models (S
 
 1️⃣ **Clone the repository in your terminal**:
 ```bash
-git clone https:https://github.com/XavierMinesParis/SDM.git
+git clone https://github.com/XavierMinesParis/SDM.git
 cd SDM
 ```
 
