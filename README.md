@@ -54,6 +54,9 @@ SDM/
 │
 ├── report.pdf                  # Internship report
 ├── Data/                       # Folder for datasets
+├── Current/                    # Folder for current maps
+├── SSP245/                     # Folder for SSP245 maps
+├── SSP585/                     # Folder for SSP685 maps
 ├── Figures/                    # Folder for plots
 ├── logistic_regression.py      # Classical logistic regression
 ├── logistic_regression2.py     # Logistic regression with L1 regularization
